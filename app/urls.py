@@ -4,7 +4,7 @@ from .views import *
 urlpatterns = [
     path('', ApiRoot.as_view(), name=ApiRoot.name),
 
-    path('import/', ImportJson.as_view(), name=ImportJson.name),
+    path('import/', Import.as_view(), name=Import.name),
 
     path('users/', UserList.as_view(), name=UserList.name),
     path('users/<int:pk>/', UserDetail.as_view(), name=UserDetail.name),

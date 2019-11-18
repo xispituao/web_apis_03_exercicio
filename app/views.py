@@ -11,7 +11,7 @@ from rest_framework import permissions
 
 
 
-class ImportJson(APIView):
+class Import(APIView):
     name = 'import'
 
     def post(self, request, format=None):
@@ -142,7 +142,7 @@ class ApiRoot(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return Response({
-            'import': reverse(ImportJson.name, request=request),
+            'import': reverse(Import.name, request=request),
             'users': reverse(UserList.name, request=request),
             'profile': reverse(ProfileList.name, request=request),
             'posts': reverse(PostList.name, request=request),

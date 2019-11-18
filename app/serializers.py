@@ -23,7 +23,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         address_data = validated_data.pop('address')
         user_created = User.objects.create_user(username=validated_data['name'].split()[0],
                                                 email=validated_data['email'],
-                                                password='hatsunemiku')
+                                                password='123456')
         address = Address.objects.create(**address_data)
         return Profile.objects.create(address=address, user=user_created, **validated_data)
 
