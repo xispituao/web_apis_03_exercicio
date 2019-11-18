@@ -100,7 +100,6 @@ class CommentList(generics.ListAPIView):
 class CommentDetail(generics.RetrieveDestroyAPIView):
     serializer_class = CommentSerializer
     name = 'comment-detail'
-    #lookup_field = 'pk'
     lookup_url_kwarg = 'comment_pk'
 
     permission_classes = (CommentDeletePermission,)
