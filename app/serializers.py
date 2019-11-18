@@ -1,16 +1,6 @@
 from rest_framework import serializers
 from app.models import *
 
-class PostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = ['userId', 'title', 'body']
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ['postId', 'name', 'email', 'body']
-
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
@@ -26,5 +16,28 @@ class ProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         address_data = validated_data.pop('address')
         address = Address.objects.create(**address_data)
-        profile = Profile.objects.create(address=address, **validated_data)
-        return profile
+        return Profile.objects.create(address=address, **validated_data)
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['userId', 'title', 'body']
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['postId', 'name', 'email', 'body']
+
+class ProfilePostSerializer(serializers.ModelSerializer):
+    posts = PostSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['name', 'email', 'address', 'posts']
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ['userId', 'title', 'body', 'comments']
