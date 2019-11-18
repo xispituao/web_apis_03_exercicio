@@ -6,9 +6,9 @@ from .models import *
 from .serializers import *
 from rest_framework import generics
 from rest_framework.reverse import reverse
-from django.http import Http404
 from .permissions import *
 from rest_framework import permissions
+
 
 
 class ImportJson(APIView):
@@ -31,17 +31,18 @@ class ImportJson(APIView):
         if comment_serializer.is_valid():
             comment_serializer.save()
 
-class UserList(generics.ListCreateAPIView):
+class UserList(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     name = "user-list"
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticated,)
 
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     name = "user-detail"
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrReadOnly,)
+
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
 
 
 class ProfileList(generics.ListCreateAPIView):
@@ -54,12 +55,25 @@ class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProfileSerializer
     name = 'profile-detail'
 
+class PostList(generics.ListCreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    name = 'post-list'
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+
+class PostDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    name = 'post-detail'
+    permission_classes = (PostOwnerPermissions,)
+
 class ProfilePostList(generics.ListAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfilePostSerializer
     name = 'profile-post-list'
 
-class ProfilePostDetail(generics.ListAPIView):
+class ProfilePostDetail(generics.RetrieveAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfilePostSerializer
     name = 'profile-post-detail'
@@ -69,7 +83,7 @@ class PostCommentList(generics.ListAPIView):
     serializer_class = PostCommentSerializer
     name = 'post-comment-list'
 
-class PostCommentDetail(generics.ListAPIView):
+class PostCommentDetail(generics.RetrieveAPIView):
     queryset = Post.objects.all()
     serializer_class = PostCommentSerializer
     name = 'post-comment-detail'
@@ -79,39 +93,22 @@ class CommentList(generics.ListAPIView):
     serializer_class = CommentSerializer
     name = 'comment-list'
 
-class CommentDetail(APIView):
+    def get_queryset(self):
+        post_pk = self.kwargs['pk']
+        return Comment.objects.filter(postId=post_pk)
+
+class CommentDetail(generics.RetrieveDestroyAPIView):
+    serializer_class = CommentSerializer
     name = 'comment-detail'
+    #lookup_field = 'pk'
+    lookup_url_kwarg = 'comment_pk'
 
-    def get_comment(self, post_pk,comment_pk):
-        try:
-            post = Post.objects.get(pk=post_pk)
-            try:
-                comment =  post.comments.get(pk=comment_pk)
-                return comment
-            except Comment.DoesNotExist:
-                raise Http404
-        except Post.DoesNotExist:
-            raise Http404
+    permission_classes = (CommentDeletePermission,)
 
-    def get(self, request, post_pk,comment_pk, format=None):
-        comment = self.get_comment(post_pk,comment_pk)
-        comment_s = CommentSerializer(comment)
-        return Response(comment_s.data)
+    def get_queryset(self):
+        post_pk = self.kwargs['pk']
+        return Comment.objects.filter(postId=post_pk)
 
-    def put(self, request, post_pk,comment_pk, format=None):
-        comment = self.get_comment(post_pk,comment_pk)
-        comment_data = request.data
-        comment_data['postId'] = post_pk
-        comment_s = CommentSerializer(comment, data=comment_data)
-        if comment_s.is_valid():
-            comment_s.save()
-            return Response(comment_s.data)
-        return Response(comment_s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, post_pk,comment_pk, format=None):
-        comment = self.get_comment(post_pk,comment_pk)
-        comment.delete()
-        return Response(status=status.HTTP_200_OK)
 
 class ProfilePostsComments(APIView):
     name = 'profile-posts-comments'
@@ -148,6 +145,7 @@ class ApiRoot(generics.GenericAPIView):
             'import': reverse(ImportJson.name, request=request),
             'users': reverse(UserList.name, request=request),
             'profile': reverse(ProfileList.name, request=request),
+            'posts': reverse(PostList.name, request=request),
             'profile-posts': reverse(ProfilePostList.name, request=request),
             'posts-comments': reverse(PostCommentList.name, request=request),
             'profile-posts-comments': reverse(ProfilePostsComments.name, request=request)
