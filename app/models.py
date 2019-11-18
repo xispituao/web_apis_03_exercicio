@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Address(models.Model):
     street = models.CharField(max_length=255)
@@ -9,7 +10,8 @@ class Address(models.Model):
 class Profile(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
-    address = models.OneToOneField(Address, models.CASCADE, related_name='profile')
+    address = models.ForeignKey(Address, models.CASCADE)
+    user = models.ForeignKey(User, models.CASCADE, related_name="profile")
 
 class Post(models.Model):
     title = models.CharField(max_length=255)
